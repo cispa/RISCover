@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+# supply reproducer file as arg
+
+set -e
+target=diffuzz-client
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --clean)
+            clean=1
+            shift
+            ;;
+        --out)
+            output=$2
+            shift 2
+            ;;
+        --portable)
+            portable=1
+            shift
+            ;;
+        --floats)
+            build_flags+=("-DFLOATS")
+            shift
+            ;;
+        --vector)
+            build_flags+=("-DVECTOR")
+            shift
+            ;;
+        --no-check-mem)
+            no_check_mem=1
+            shift
+            ;;
+        --no-auto-map-mem)
+            no_auto_map_mem=1
+            shift
+            ;;
+        --verbose)
+            build_flags+=("-DVERBOSE")
+            shift
+            ;;
+        --meta)
+            build_flags+=("-DMETA")
+            shift
+            ;;
+        --seq-len)
+            build_flags+=("-DMAX_SEQ_LEN=$2")
+            shift 2
+            ;;
+        --single-threaded)
+            build_flags+=("-DSINGLE_THREAD")
+            shift
+            ;;
+        --build-flags)
+            build_flags+=("$2")
+            shift 2
+            ;;
+        --debug)
+            debug=1
+            shift
+            ;;
+        --gen-compile-commands)
+            compile_commands=1
+            shift
+            ;;
+        --target)
+            target=$2
+            shift 2
+            ;;
+        --repro-file)
+            repro="$(realpath "$2")"
+            if ! [ -f "$repro" ]; then
+                echo "Repro file $repro doesn't exist"
+                exit 1
+            fi
+            shift 2
+            ;;
+        *)
+            echo "Unknown option $1"
+            exit 1
+    esac
+done
+
+if [ -z "$repro" ]; then
+    if [ -z "$no_check_mem" ]; then
+        build_flags+=("-DCHECK_MEM")
+    fi
+    if [ -z "$no_auto_map_mem" ]; then
+        build_flags+=("-DAUTO_MAP_MEM")
+    fi
+fi
+
+if [ -z "$ARCH" ]; then
+  echo "ARCH env var is not set"
+  exit 1
+fi
+
+pushd "$FRAMEWORK_ROOT/client" > /dev/null || exit 1
+# if [ -n "$clean" ]; then
+# TODO: add this parameter but only once changing flags are doing a rebuild
+make clean
+# fi
+if [ -z "$compile_commands" ]; then
+    build_command=(make)
+else
+    build_command=(bear -- make)
+fi
+REPRO_FILE="$repro" CFLAGS="${build_flags[*]}" DEBUG="$debug" ARCH="$ARCH" "${build_command[@]}" "out/$target"
+if [ -n "$output" ]; then
+    file=$(realpath "out/$target")
+    popd > /dev/null || exit 1
+    cp "$file" "$output"
+fi

@@ -1,0 +1,2 @@
+CompileFlags:
+  Remove: [-fno-tree-loop-vectorize]

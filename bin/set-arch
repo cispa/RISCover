@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Usage: set-arch <architecture>
+if [ -z "$1" ]; then
+  echo "Usage: set-arch <architecture>"
+  exit 1
+fi
+
+echo "$1" > "$(dirname "$(dirname "${BASH_SOURCE[0]}")")"/.curarch
+echo "ARCH set to $1"
+direnv reload

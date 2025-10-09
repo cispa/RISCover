@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+import argparse
+
+from pyutils.shared_logic import parse_and_set_flags
+parse_and_set_flags()
+
+from pyutils.shared_logic import parser_add_common_extension_parsing, get_collection_from_args, get_most_common_argparser
+from pyutils.generation.instruction import Instruction
+
+parser = get_most_common_argparser()
+parser.add_argument('instr', type=lambda x: int(x, 16))
+parser.add_argument('change', nargs='+', help='Specify wanted changes in the form "Rd=10"')
+
+parser.add_argument('--vector', action='store_true')
+parser.add_argument('--floats', action='store_true')
+
+parser_add_common_extension_parsing(parser)
+args = parser.parse_args()
+collection = get_collection_from_args(args)
+
+i = args.instr
+mnemonic = collection.disassemble(i)
+instr = Instruction(mnemonic=mnemonic, mra_instruction=collection.instructions[mnemonic], value=i)
+for c in args.change:
+    name, value = c.split('=')
+    setattr(instr, name, int(value, 0))
+print("New instruction:", hex(instr.value))
+instr.pretty_print_instr()

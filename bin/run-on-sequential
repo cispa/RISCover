@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# usage: run-on-sequential --pin-core 1,3 repro lab27 lab55
+set -e
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --pin-core)
+            taskset="taskset -c $2 "
+            echo "Using: $taskset"
+            shift 2
+            ;;
+        --sync-as)
+            sync_as=$2
+            shift 2
+            ;;
+        *)
+            if [ -z "$file" ]; then
+                file="$1"
+                shift
+            else
+                break
+            fi
+            ;;
+    esac
+done
+
+if [ -z "$sync_as" ]; then
+    sync_as=$(basename "$file")
+fi
+
+for machine in "$@";
+do
+    echo
+    echo "$machine"
+    if [[ "$machine" =~ qemu ]]; then
+        qemu-wrapped "$machine" "$file" || echo "exit code: $?"
+    else
+        rsync --ignore-times --no-times -ahr "$file" "$machine":"$sync_as" || { echo -e "\e[31mrsync failed for $machine\e[0m" && continue; }
+        # https://unix.stackexchange.com/a/461306
+        # sh and && true are there to make exit code and error messages visible to ssh client
+        ssh "$machine" 'COLOR=1 bash -c "'"$taskset"'./'"$sync_as"' && true"' || echo -e "\e[31mexit code: $?\e[0m"
+    fi
+done

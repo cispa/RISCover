@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# usage:               build-repro-run-on repro.c -- lab27 lab55
+# or with build flags: build-repro-run-on repro.c -- --verbose -- lab27 lab55
+set -e
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --)
+            shift
+            break
+            ;;
+        *)
+            if [ -z "$repro" ]; then
+                repro="$1"
+                repro="${repro//\//,}"
+                repro=${repro%.c}
+            fi
+            build_args+=("$1")
+            shift
+            ;;
+    esac
+done
+"${FRAMEWORK_ROOT:+$FRAMEWORK_ROOT/bin/}"./build-repro "${build_args[@]}"
+run-on-sequential --sync-as repro "$repro" "$@"

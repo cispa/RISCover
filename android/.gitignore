@@ -1,0 +1,4 @@
+src/main/assets/diffuzz-client
+build
+.gradle
+.direnv

@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+set -e
+
+args=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --out)
+            output="$2"
+            shift 2
+            ;;
+        -*)
+            args+=("$1")
+            shift
+            ;;
+        *)
+            if [ -z "$repro" ]; then
+                repro="$1"
+                shift
+            else
+                echo "build-repro: Unknown argument $1"
+                exit 1
+            fi
+            ;;
+    esac
+done
+
+if [ -z "$repro" ]; then
+    echo "Reproducer needed"
+    exit 1
+fi
+
+build_flags=$(awk 'NR==1' "$repro" | cut -f2- -d' ')
+echo "Loaded the following build flags from the file: $build_flags"
+arch=$(awk 'NR==2' "$repro" | cut -f2- -d' ')
+echo "Loaded the following architecture from the file: $arch"
+if [ -z "$build_flags" ] || [ -z "$arch" ]; then
+    echo "Build flags or arch in the file were empty. Is this really a reproducer file?"
+    exit 1
+fi
+if [ "$ARCH" != "$arch" ]; then
+    echo "$ARCH (ARCH env var) != $arch"
+    exit 1
+fi
+echo
+if [ -z "$output" ]; then
+    output="${repro//\//,}"
+    output=${output%.c}
+fi
+"${FRAMEWORK_ROOT:-..}"/client/build-client --build-flags "$build_flags" "${args[@]}" --target repro --repro-file "$repro" --out "$output"
+echo
+echo "Result is $output"

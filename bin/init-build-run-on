@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# usage:               init-build-run-on repro.yaml -- -- machine1 machine2
+# or with build flags: init-build-run-on repro.yaml -- --verbose -- machine1 machine2
+set -e
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --)
+            shift
+            break
+            ;;
+        *)
+            init_flags+=("$1")
+            shift 1
+            ;;
+    esac
+done
+repro=$("${FRAMEWORK_ROOT:+$FRAMEWORK_ROOT/bin/}"./init-repro-template "${init_flags[@]}")
+echo
+"${FRAMEWORK_ROOT:+$FRAMEWORK_ROOT/bin/}"./build-repro-run-on "$repro" "$@"

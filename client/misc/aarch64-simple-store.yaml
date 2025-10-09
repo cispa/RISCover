@@ -1,0 +1,51 @@
+input:
+  dis_opcodes:
+  - 'str x5,  [x6,  #0]'
+  - 'str x2,  [x0,  #8]'
+  - 'str x1,  [x0, #16]'
+  - 'str x1,  [x0, #16]'
+  - 'str x15, [x0, #32]'
+  - 'str x3,  [x3, #17]'
+  regs:
+    gp:
+      # x0: 0x7fff
+      x0: 0x800000
+      x1: 0
+      x2: 0x7fffffff
+      x3: 0x3000003000
+      x4: 0x8000000000000000
+      x5: 0xffffffffffff8000
+      x6: 0x800bff8
+      x7: 0x2a
+      x8: 0x7f
+      x9: 0x7fffffffffffffff
+      x10: 0x7fff
+      x11: 0x0
+      x12: 0xff
+      x13: 0x7fffffffffffffff
+      x14: 0x2a
+      x15: 0x539
+      x16: 0xffffffffffffffff
+      x17: 0x3000003000
+      x18: 0xff
+      x19: 0xffff
+      x20: 0xffffffff80000000
+      x21: 0xffffffff
+      x22: 0xff
+      x23: 0xffffffff80000000
+      x24: 0xffffffffffffff80
+      x25: 0xffff
+      x26: 0xffffffffffff8000
+      x27: 0xffff
+      x28: 0x8000000000000000
+      x29: 0xff
+      x30: 0xffffffffffffffff
+      sp: 0xffffffffffffff80
+    vec:
+      v0: 0x1
+    pstate: 0x0
+    fpsr: 0x0
+flags:
+- -DVECTOR
+- -DCHECK_MEM
+arch: aarch64

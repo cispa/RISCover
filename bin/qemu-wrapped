@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+if [ "$1" = --system ]; then
+  suffix="-system"
+  shift 1
+fi
+
+machine="$1"
+shift 1
+
+# https://lazamar.co.uk/nix-versions/?channel=nixpkgs-unstable&package=qemu
+# https://launchpad.net/ubuntu/+source/qemu
+# Ubuntu 20.04 still has v4
+# TODO: find a solution for qemu-latest, build from git?
+declare -A qemu_map=(
+    [qemu-latest]=https://github.com/NixOS/nixpkgs/archive/refs/heads/nixpkgs-unstable.tar.gz
+    # Currently 9.1.2
+    [qemu-v9]=https://github.com/NixOS/nixpkgs/archive/4e96537f163fad24ed9eb317798a79afc85b51b7.tar.gz
+    [qemu-v8]=https://github.com/NixOS/nixpkgs/archive/0c19708cf035f50d28eb4b2b8e7a79d4dc52f6bb.tar.gz
+    [qemu-v7]=https://github.com/NixOS/nixpkgs/archive/1b7a6a6e57661d7d4e0775658930059b77ce94a4.tar.gz
+    [qemu-v6]=https://github.com/NixOS/nixpkgs/archive/d1c3fea7ecbed758168787fe4e4a3157e52bc808.tar.gz
+    [qemu-v5]=https://github.com/NixOS/nixpkgs/archive/a78ed5cbdd5427c30ca02a47ce6cccc9b7d17de4.tar.gz
+    [qemu-v4]=https://github.com/NixOS/nixpkgs/archive/2738ca86bd623934d816bef90f1867002c119950.tar.gz
+)
+
+machine="${machine/qemu-/}"
+version="qemu-${machine%%-*}"
+if [[ $machine == *-* ]]; then
+    cpu=$(echo "${machine#*-}" | sed 's/-/=on,/g;s/$/=on/')
+fi
+
+if ! [ "${qemu_map[$version]+1}" ]; then
+  echo "Qemu $version is not implemented." && exit 1
+fi
+
+if [ "$version" = qemu-v4 ]; then
+  echo "Error: qemu-v4 currently does not work. Crashes when switching the stack"
+  exit 1
+fi
+
+case "$ARCH" in
+  riscv64)
+                          # NOTE: qemu-v6 has no zbb, zba, vector and also no compressed
+    if [ -z "$cpu" ] && ! { [[ "$version" =~ qemu-v6 ]] || [[ "$version" =~ qemu-v5 ]] || [[ "$version" =~ qemu-v4 ]]; }; then
+      # NOTE: elen must be 8 or 16 for 0x164f257
+      #       but it must also be 64 or 32 for 0xc97bf957
+      #       not sure what to use
+      #       8 produces the most diffs and only 5k e/s
+      #
+      #       8:  6300  5000
+      #       16: 3134 30000
+      #       32: 3100 28000
+      #       64: 3100 28000
+      #       none: 3100 28000
+      #
+      # ./start_clients.sh --instances 1 lab42 lab52 qemu-v8 qemu-latest -- server-difffuzz/run_on.py --vector --instructions 0xc97bf957 0x164f257
+      cpu="v=true,vlen=128,elen=32,vext_spec=v1.0,zba=true,zbb=true"
+    fi
+    env="QEMU_CPU=rv64${cpu:+,$cpu}"
+    qemu_cmd="qemu${suffix}-riscv64"
+    ;;
+  aarch64)
+    # examples:
+    # qemu-v8                         no sve
+    # qemu-v9-sve-sve512              only sve 512 bit
+    # qemu-v9-sve-sve512-sme-sme128   sve 512 bit, sme 128 bit
+
+    env="QEMU_CPU=max,sve=off,sme=off${cpu:+,$cpu}"
+    # max crashes in sve code
+    # env="QEMU_CPU=cortex-a53,${cpu:+,$cpu}"
+    qemu_cmd="qemu${suffix}-aarch64"
+    ;;
+  *)
+    exit 1
+    ;;
+esac
+
+                                                                                 # When we use personality in qemu, internal segfaults are not reported correctly
+                                                                                 # some assertion fails instead of printing the signal
+nix-shell --pure -p qemu util-linux -I nixpkgs=${qemu_map[$version]} --run "$env setarch -R $qemu_cmd $*"
+
+# Listing available options:
+# Open the qmp socket
+# qemu-wrapped --system qemu-latest -M virt -nographic -qmp unix:/tmp/qmp-sock,server,nowait
+#
+# Then in qemu repo:
+# scripts/qmp/qmp-shell /tmp/qmp-sock
+#
+# Then:
+# query-cpu-model-expansion type=full model={"name":"max"}
+#
+# result:
+# {
+#   "return": {
+#     "model": {
+#       "name": "max",
+#       "props": {
+#         "sve768": true,
+#         "sve128": true,
+#         "sve1024": true,
+#         "sve1280": true,
+#         "pauth-impdef": false,
+#         "sve896": true,
+#         "sve256": true,
+#         "sve1536": true,
+#         "sve1792": true,
+#         "sve384": true,
+#         "sve": true,
+#         "sve2048": true,
+#         "pauth": true,
+#         "pauth-qarma3": false,
+#         "sve512": true,
+#         "aarch64": true,
+#         "pmu": true,
+#         "sve1920": true,
+#         "sve1152": true,
+#         "sve640": true,
+#         "sve1408": true,
+#         "sve1664": true
+#       }
+#     }
+#   }
+# }

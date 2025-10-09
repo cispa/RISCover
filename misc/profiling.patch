@@ -1,0 +1,229 @@
+diff --git a/client/src/lib/runner.c b/client/src/lib/runner.c
+index 351e5a3..6c8b09a 100644
+--- a/client/src/lib/runner.c
++++ b/client/src/lib/runner.c
+@@ -238,6 +238,8 @@ struct result run_with_instr_seq_no_check_mem(const uint32_t* instr, unsigned n,
+     modify_code(instr, n);
+     load_memory_mappings(mappings, mappings_n);
+ 
++    profiling_log2_reset();
++
+     signal_handled = 0;
+     runner_running = 1;
+     exception_stack_count = 0;
+@@ -249,6 +251,8 @@ struct result run_with_instr_seq_no_check_mem(const uint32_t* instr, unsigned n,
+     }
+     runner_running = 0;
+ 
++    profiling_log2(ID_ACTUAL_RUNNING);
++
+     struct result r = {
+             .signum = global_signum,
+             .si_addrr = global_si_addr,
+diff --git a/client/src/lib/util.c b/client/src/lib/util.c
+index a248e8b..724637e 100644
+--- a/client/src/lib/util.c
++++ b/client/src/lib/util.c
+@@ -13,6 +13,7 @@
+ #include <dirent.h>
+ #include <limits.h>
+ #include <sys/time.h>
++#include <sys/resource.h>
+ 
+ #include "util.h"
+ #include "regs.h"
+@@ -186,3 +187,98 @@ long long timestamp_us() {
+ 
+     return (long long)ts.tv_sec * 1000000LL + ts.tv_nsec / 1000;
+ }
++
++static const char* profiling_id_names[ID_COUNT] = {
++    [ID_GENERATION]     = "generation",
++    [ID_RUNNING]        = "running",
++    [ID_ACTUAL_RUNNING] = "  of which actual running",
++    [ID_PACK]           = "net-pack",
++    [ID_SEND]           = "net-send",
++    [ID_RECV]           = "net-recv"
++};
++
++static uint64_t profiling_totals[ID_COUNT] = {0};
++
++static uint64_t start_timestamp;
++static uint64_t last_timestamp;
++static uint64_t last_timestamp2;
++
++const char* profiling_id_to_string(profiling_id_t id) {
++    if (id < 0 || id >= ID_COUNT) {
++        exit(1);
++    }
++    return profiling_id_names[id];
++}
++
++void profiling_log_reset() {
++    last_timestamp = timestamp_us();
++    start_timestamp = last_timestamp;
++    for (int i = 0; i < ID_COUNT; i++) {
++        profiling_totals[i] = 0;
++    }
++}
++
++void profiling_log(profiling_id_t id) {
++    if (id < 0 || id >= ID_COUNT) {
++        fprintf(stderr, "Unknown profiling id: %d\n", id);
++        exit(1);
++    }
++
++    uint64_t curr_timestamp = timestamp_us();
++    uint64_t delta = curr_timestamp - last_timestamp;
++    profiling_totals[id] += delta;
++
++    /* printf("%s %lu us (total: %lus)\n", profiling_id_to_string(id), delta, profiling_totals[id]/1000000); */
++
++    last_timestamp = curr_timestamp;
++}
++
++void profiling_log2_reset() {
++    last_timestamp2 = timestamp_us();
++}
++
++void profiling_log2(profiling_id_t id) {
++    if (id < 0 || id >= ID_COUNT) {
++        fprintf(stderr, "Unknown profiling id: %d\n", id);
++        exit(1);
++    }
++
++    uint64_t curr_timestamp = timestamp_us();
++    uint64_t delta = curr_timestamp - last_timestamp2;
++    profiling_totals[id] += delta;
++
++    /* printf("%s %lu us (total: %lus)\n", profiling_id_to_string(id), delta, profiling_totals[id]/1000000); */
++
++    last_timestamp2 = curr_timestamp;
++}
++
++void profiling_dump_totals(void) {
++    printf("=== Profiling Totals ===\n");
++    uint64_t curr_timestamp = timestamp_us();
++    uint64_t total_time_us = curr_timestamp - start_timestamp;
++    double total_time_s = total_time_us / 1000000.0;
++
++    struct rusage usage;
++    if (getrusage(RUSAGE_SELF, &usage) == 0) {
++        double user_time = usage.ru_utime.tv_sec + usage.ru_utime.tv_usec / 1e6;
++        double sys_time = usage.ru_stime.tv_sec + usage.ru_stime.tv_usec / 1e6;
++        double cpu_time = user_time + sys_time;
++
++        double user_percent = (cpu_time > 0) ? (user_time * 100.0 / cpu_time) : 0.0;
++        double sys_percent = (cpu_time > 0) ? (sys_time * 100.0 / cpu_time) : 0.0;
++
++        printf("User time:   %.2f seconds (%.2f%%)\n", user_time, user_percent);
++        printf("Kernel time: %.2f seconds (%.2f%%)\n", sys_time, sys_percent);
++    } else {
++        perror("getrusage");
++        exit(1);
++    }
++
++    printf("\n");
++    printf("Total time: %.2fs\n", total_time_s);
++    for (int i = 0; i < ID_COUNT; i++) {
++        double entry_time_s = profiling_totals[i] / 1000000.0;
++        double percent = (total_time_us > 0) ? (profiling_totals[i] * 100.0 / total_time_us) : 0.0;
++        printf("%s: %.2fs (%.2f%%)\n", profiling_id_names[i], entry_time_s, percent);
++    }
++}
+diff --git a/client/src/lib/util.h b/client/src/lib/util.h
+index b1e61bb..631be6d 100644
+--- a/client/src/lib/util.h
++++ b/client/src/lib/util.h
+@@ -112,4 +112,20 @@ long long timestamp_us();
+ #define COLOR_YELLOW "\033[0;33m"
+ #define COLOR_RESET  "\033[0m"
+ 
++typedef enum {
++    ID_GENERATION,
++    ID_RUNNING,
++    ID_ACTUAL_RUNNING,
++    ID_PACK,
++    ID_SEND,
++    ID_RECV,
++    ID_COUNT
++} profiling_id_t;
++
++void profiling_log(profiling_id_t id);
++void profiling_log_reset();
++void profiling_log2(profiling_id_t id);
++void profiling_log2_reset();
++void profiling_dump_totals(void);
++
+ #endif // UTIL_H_
+diff --git a/client/src/diffuzz-client.c b/client/src/diffuzz-client.c
+index b5bc63c..f44882f 100644
+--- a/client/src/diffuzz-client.c
++++ b/client/src/diffuzz-client.c
+@@ -502,7 +502,13 @@ void start_client() {
+ 
+     init_comp(&connection, OUT_BIGBUFFER_SIZE, max_batch_n*max_input_size);
+ 
++    int warmup = 0;
+     while (true) {
++        if (warmup == 100) {
++            printf("Warmup over. Starting profiling....\n");
++            profiling_log_reset();
++        }
++
+         uint32_t* instr_seq;
+         uint8_t  seq_len;
+ 
+@@ -519,6 +525,8 @@ void start_client() {
+         recv_msg(&connection, (uint8_t*)inputs_buf, max_input_size*n);
+         #endif
+ 
++        profiling_log(ID_RECV);
++
+         struct input* input = inputs_buf;
+         for (unsigned b = 0; b < n; b++) {
+ #ifdef JUST_SEQ_NUM
+@@ -554,6 +562,7 @@ void start_client() {
+                 ((uint64_t*)&regs)[i] = filler_64;
+             }
+ #endif
++            profiling_log(ID_GENERATION);
+ 
+ #ifndef WITH_FULL_REGS
+     #if defined(__riscv)
+@@ -587,6 +596,7 @@ void start_client() {
+             if (input->full_seq) {
+                 struct result results[MAX_SEQ_LEN];
+                 unsigned stopped_at = run_with_instr_seq_full_seq(instr_seq, seq_len, 0, 0, (struct result*)&results);
++                profiling_log(ID_RUNNING);
+ 
+ #ifdef INTRODUCE_RANDOM_DIFFS
+                 if (rand() % 1000 == 0) {
+@@ -606,6 +616,7 @@ void start_client() {
+                 }
+             } else {
+                 struct result r = run_with_instr_seq(instr_seq, seq_len, 0, 0);
++                profiling_log(ID_RUNNING);
+ 
+ #ifdef INTRODUCE_RANDOM_DIFFS
+                 if (rand() % 1000 == 0) {
+@@ -622,5 +633,6 @@ void start_client() {
+             }
+             assert(bigbuffer_out_i < OUT_BIGBUFFER_SIZE);
++            profiling_log(ID_PACK);
+ 
+ #ifndef JUST_SEQ_NUM
+             input = (struct input*) (((uint64_t) input)+sizeof(*input)+(input->n_instrs-1)*sizeof(*input->instr_seq));
+@@ -633,6 +645,12 @@ void start_client() {
+ 
+         send_msg_compressed(&connection, out_bigbuffer, bigbuffer_out_i);
+         bigbuffer_out_i = 0;
++        profiling_log(ID_SEND);
++
++        if (warmup >= 200 && warmup % 100 == 0) {
++            profiling_dump_totals();
++        }
++        warmup++;
+     }
+ }
+ 

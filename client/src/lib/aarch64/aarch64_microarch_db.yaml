@@ -1,0 +1,120 @@
+0x0:
+  vendor: Huawei
+  parts:
+    0xd02: Kunpeng-Pro
+0x41:
+  vendor: Arm
+  parts:
+    0xd00: Foundation
+    0xd03: Cortex-A53
+    0xd04: Cortex-A35
+    0xd05: Cortex-A55
+    0xd07: Cortex-A57
+    0xd08: Cortex-A72
+    0xd09: Cortex-A73
+    0xd0a: Cortex-A75
+    0xd0b: Cortex-A76
+    0xd0c: Neoverse-N1
+    0xd0d: Cortex-A77
+    0xd0e: Cortex-A76Ae
+    0xd0f: Aem-V8
+    0xd40: Neoverse-V1
+    0xd41: Cortex-A78
+    0xd42: Cortex-A78Ae
+    0xd44: Cortex-X1
+    0xd46: Cortex-A510
+    0xd47: Cortex-A710
+    0xd48: Cortex-X2
+    0xd49: Neoverse-N2
+    0xd4b: Cortex-A78C
+    0xd4c: Cortex-X1C
+    0xd4d: Cortex-A715
+    0xd4e: Cortex-X3
+    0xd4f: Neoverse-V2
+    0xd80: Cortex-A520
+    0xd81: Cortex-A720
+    0xd82: Cortex-X4
+    0xd84: Neoverse-V3
+    0xd85: Cortex-X925
+    0xd87: Cortex-A725
+    0xd8e: Neoverse-N3
+0x42:
+  vendor: Broadcom
+  parts:
+    0x100: Brahma-B53
+    0x516: Vulcan
+0x43:
+  vendor: Cavium
+  parts:
+    0xa1: ThunderX
+    0xa2: ThunderX-81XX
+    0xa3: ThunderX-83XX
+    0xaf: ThunderX2
+    0xb1: Octx2-98XX
+    0xb2: Octx2-96XX
+    0xb3: Octx2-95XX
+    0xb4: Octx2-95XXN
+    0xb5: Octx2-95XXMM
+    0xb6: Octx2-95XXO
+0x46:
+  vendor: Fujitsu
+  parts:
+    0x1: A64FX
+0x48:
+  vendor: HiSilicon
+  parts:
+    0xd01: TSV110
+    0xd02: HiP09
+    0xd06: HiP12
+0x4e:
+  vendor: NVIDIA
+  parts:
+    0x3: Denver
+    0x4: Carmel
+0x50:
+  vendor: APM
+  parts:
+    0x0: XGene
+0x51:
+  vendor: Qualcomm
+  parts:
+    0x1: Oryon-X1
+    0x200: Kryo
+    0x201: Kryo
+    0x205: Kryo
+    0x211: Kryo
+    0x800: Kryo-2XX-Gold
+    0x801: Kryo-2XX-Silver
+    0x802: Kryo-3XX-Gold
+    0x803: Kryo-3XX-Silver
+    0x804: Kryo-4XX-Gold
+    0x805: Kryo-4XX-Silver
+    0xc00: Falkor
+0x53:
+  vendor: Samsung
+  parts:
+    0x2: Exynos-M3
+0x61:
+  vendor: Apple
+  parts:
+    0x22: M1-Icestorm
+    0x23: M1-Firestorm
+    0x24: M1-Icestorm-Pro
+    0x25: M1-Firestorm-Pro
+    0x28: M1-Icestorm-Max
+    0x29: M1-Firestorm-Max
+    0x32: M2-Blizzard
+    0x33: M2-Avalanche
+    0x34: M2-Blizzard-Pro
+    0x35: M2-Avalanche-Pro
+    0x38: M2-Blizzard-Max
+    0x39: M2-Avalanche-Max
+0x6d:
+  vendor: Microsoft
+  parts:
+    0xd49: Azure-Cobalt-100
+0xc0:
+  vendor: Ampere
+  parts:
+    0xac3: Ampere1
+    0xac4: Ampere1A

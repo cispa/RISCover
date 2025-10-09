@@ -1,0 +1,160 @@
+#!/usr/bin/env python3
+import yaml
+import sys
+import argparse
+import os
+
+parser = argparse.ArgumentParser(
+    description='Generate a standalone C reproducer from a difffuzz YAML file.',
+    epilog='Examples:\n'
+           '  init-repro-template repro.yaml\n'
+           '  init-repro-template --no-sig repro.yaml\n'
+           '  init-repro-template --orig-seq repro.yaml',
+    formatter_class=argparse.RawTextHelpFormatter,
+)
+parser.add_argument('in_yaml', type=str, help='Path to reproducer YAML file (*.yaml)')
+parser.add_argument('--no-sig', action='store_true')
+parser.add_argument('--orig-seq', action='store_true')
+args = parser.parse_args()
+
+if not args.in_yaml.endswith(".yaml"):
+    parser.error("Input must be a .yaml file")
+
+from pyutils.shared_logic import load_config_from_repro
+
+load_config_from_repro(args.in_yaml)
+
+import pyutils.config as config
+
+from pyutils.repro import Repro
+from pyutils.inp import InputWithSparseValues
+
+FRAMEWORK_ROOT = os.getenv('FRAMEWORK_ROOT')
+template = f"{FRAMEWORK_ROOT}/client/src/" if FRAMEWORK_ROOT else "../client/src/"
+if args.no_sig:
+    template+="repro-template.c"
+else:
+    template+="repro-template-sig.c"
+
+repro = Repro.from_file(args.in_yaml)
+
+with open(template, "r") as f:
+    template = f.read()
+
+out = template
+
+out = out.replace("ARCH", config.ARCH)
+
+inp = repro.inp
+instr_seq = [hex(x) for x in inp.get_instr_seq()]
+
+out = out.replace("INSTR_SEQ", ", ".join(instr_seq))
+# TODO: .replace("c.j ", "c.j .")
+# if assert in template fails on a jump or branch instruction its most probably this
+# c.j 0 is not c.j to current pc with gas/gcc, but j pc with lower bytes 0
+# the fix is to just prepend . to the number (e.g. .-4 instead of only -4)
+if inp.dis_opcodes and len(inp.dis_opcodes) == len(inp.get_instr_seq()):
+    dis_opcodes = "\n".join([f'            "{x.strip()}\\n\\t"' for x in inp.dis_opcodes])
+else:
+    match config.ARCH:
+        case "riscv64":
+            # NOTE: only needed because of compressed instructions. There is .insn,
+            # we would just have to split up the instructions.
+            pseudo_op=".fill 1, 4,"
+        case "aarch64":
+            pseudo_op=".inst"
+        case _:
+            raise Exception()
+    dis_opcodes = "\n".join([f'            "{pseudo_op} {hex(x)}\\n\\t"' for x in inp.get_instr_seq()])
+
+out = out.replace("INSTR_DIS", dis_opcodes)
+
+regs_lines = []
+for reg, v in inp.gp.items():
+    regs_lines+=[f"    regs.gp.{reg} = {hex(v)};"]
+if inp.fp:
+    for reg, v in inp.fp.items():
+        regs_lines+=[f"    regs.fp.{reg}.u = {hex(v)};"]
+if inp.vec:
+    for reg, v in inp.vec.items():
+        if v == 0:
+            nums = [0]
+        else:
+            # Split number into 64-bit unsigned integers
+            mask = (1 << 64) - 1
+            nums = []
+            while v > 0:
+                nums.append(v & mask)
+                v >>= 64
+
+        regs_lines+=[f"    ASSIGN_{len(nums)*8}(regs.vec.{reg}, {', '.join([hex(x) for x in reversed(nums)])})"]
+
+out = out.replace("REGS", "\n".join(regs_lines))
+
+memory_mappings_lines = []
+for i, mapping in enumerate(repro.mappings):
+    memory_mappings_lines += [f"extern uint64_t memory_mapping_val_{i}[];"]
+memory_mappings_lines += ["struct mapping mappings[] = {"]
+for i, mapping in enumerate(repro.mappings):
+    memory_mappings_lines += ["  {" + f" .start = {hex(mapping.start)}, .n = {hex(mapping.n)}, .prot = {hex(mapping.prot)}, .val = (uint8_t*)memory_mapping_val_{i}"+" },"]
+memory_mappings_lines += ["};"]
+out = out.replace("MAPPINGS", "\n".join(memory_mappings_lines))
+
+memory_mappings_values_lines = []
+for i, mapping in enumerate(repro.mappings):
+    memory_mappings_values_lines += [f"uint64_t memory_mapping_val_{i}[] = "+"{"+(','.join("0x"+mapping.val[j:j+16] for j in range(0, len(mapping.val), 16)))+"};"]
+out = out.replace("MAPPING_VALUES", "\n".join(memory_mappings_values_lines))
+
+"""
+Collect MIDRs from new client layout:
+results:
+- result: {...}
+  clients:
+  - hostname: ...
+    microarchitecture: { midr: 0x... }
+"""
+midrs_list = []
+seen = set()
+for item in repro.full_dict.get("results", []) or []:
+    try:
+        clients = item.get("clients") or []
+    except AttributeError:
+        clients = []
+    for c in clients:
+        try:
+            md = (c.get("microarchitecture") or {}).get("midr")
+        except AttributeError:
+            md = None
+        if md is None:
+            continue
+        try:
+            val = int(md)
+        except Exception:
+            try:
+                val = int(str(md), 0)
+            except Exception:
+                continue
+        if val not in seen:
+            seen.add(val)
+            midrs_list.append(val)
+
+if midrs_list:
+    midrs_c = "{ " + ", ".join(hex(x) for x in midrs_list) + " }"
+else:
+    # Use empty initializer; the C code handles empty list via count
+    midrs_c = "{ }"
+
+out = out.replace("MIDRS", midrs_c)
+
+flags = repro.flags
+flags.add(f'-DMAX_SEQ_LEN={len(instr_seq)}')
+out = out.replace("FLAGS", " ".join(flags))
+
+if args.orig_seq:
+    out = out.replace("#define USE_ASSEMBLED", "// #define USE_ASSEMBLED")
+
+out_file = args.in_yaml.removesuffix(".yaml")+".c"
+with open(out_file, "w") as f:
+    f.write(out)
+    print(f"{out_file}")
+    print(f"Now build with:\nbuild-repro {out_file}", file=sys.stderr)

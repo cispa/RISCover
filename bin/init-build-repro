@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# usage: init-build-repro repro.yaml
+set -e
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --debug)
+            build_flags+=("$1")
+            shift 1
+            ;;
+        --out)
+            build_flags+=("$1" "$2")
+            shift 2
+            ;;
+        *)
+            init_flags+=("$1")
+            shift 1
+            ;;
+    esac
+done
+repro=$("${FRAMEWORK_ROOT:+$FRAMEWORK_ROOT/bin/}"./init-repro-template "${init_flags[@]}")
+echo
+"${FRAMEWORK_ROOT:+$FRAMEWORK_ROOT/bin/}"./build-repro "${build_flags[@]}" "$repro"

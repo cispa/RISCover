@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+import argparse
+
+from pyutils.shared_logic import parse_and_set_flags
+parse_and_set_flags()
+
+import pyutils.config as config
+
+if config.ARCH == "aarch64":
+    print("Auto enabling vector. Disable in code if needed.")
+    config.VECTOR = True
+elif config.ARCH == "riscv64":
+    print("Auto enabling floats and vector. Disable in code if needed.")
+    config.VECTOR = True
+    config.FLOATS = True
+
+from pyutils.shared_logic import parser_add_common_extension_parsing, get_collection_from_args, get_most_common_argparser
+from pyutils.generation.instruction import Instruction
+
+parser = get_most_common_argparser()
+parser.add_argument('instr', type=lambda x: int(x, 16), nargs='+')
+
+parser_add_common_extension_parsing(parser)
+args = parser.parse_args()
+
+print("Auto enabling --all-extensions. Disable in code if needed.")
+args.all_extensions = True
+
+collection = get_collection_from_args(args)
+
+first = True
+for i in args.instr:
+    if not first:
+        print()
+    first = False
+    print(format(i, '08x'))
+    mnemonic = collection.disassemble(i)
+    instr = Instruction(mnemonic=mnemonic, mra_instruction=collection.instructions[mnemonic], value=i)
+    instr.pretty_print_instr()
+
+# TODO: pretty print show regs for rs1, rs2, rd

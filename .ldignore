@@ -1,0 +1,12 @@
+.*.swp
+encoding.out.h
+inst.chisel
+inst.spinalhdl
+inst.go
+instr-table.tex
+priv-instr-table.tex
+inst.rs
+inst.spinalhdl
+inst.sverilog
+instr_dict.yaml
+arch.tag

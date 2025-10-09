@@ -1,0 +1,114 @@
+input:
+  instr_seq:
+  - 0x380db500
+  - 0x3707ffe0
+  dis:
+  - 'strb w0, [x8], #0xdb'
+  - 'tbnz    w0, #0, 0xfffffffffffffffc'
+  dis_mra:
+  - A64.ldst.ldst_immpost.STRB_32_ldst_immpost
+  - A64.control.testbranch.TBNZ_only_testbranch
+  regs:
+    gp:
+      x0: 0x7fffffff
+      x1: 0x7fffffffffffffff
+      x2: 0xffff
+      x3: 0x7fff
+      x4: 0xffffffffffff8000
+      x5: 0xffffffffffffff80
+      x6: 0xffffffff80000000
+      x7: 0xffffffffffffff80
+      x8: 0x7fffffff
+      x9: 0xffffffffffffffff
+      x10: 0xffffffffffffffff
+      x11: 0xffffffff
+      x12: 0x539
+      x13: 0xffffffffffffffff
+      x14: 0xffffffffffffffff
+      x15: 0xffffffffffffff80
+      x16: 0xffff
+      x17: 0xff
+      x18: 0xffff
+      x19: 0xffff
+      x20: 0x2a
+      x21: 0xff
+      x22: 0xffffffff
+      x23: 0xffffffffffffff80
+      x24: 0xff
+      x25: 0xffff
+      x26: 0x539
+      x27: 0xff
+      x28: 0xff
+      x29: 0xffff
+      x30: 0x7fffffffffffffff
+      sp: 0x7fff
+    vec:
+      v0: 0xffffffffffffffff0000000000000002
+      v1: 0xffffffffffff8000000000000000ffff
+      v2: 0xffff8000000000000000
+      v3: 0xffffffffffffffffffffffff
+      v4: 0xffffffffffffff80ffffffffffffff80
+      v5: 0xffffffffff80000000
+      v6: 0xffffffffffff8000ffffffff80000000
+      v7: 0x5398000000000000000
+      v8: 0xffffffffffffffff00000000ffffffff
+      v9: 0x5390000000000000000
+      v10: 0xffffffffffffffffffffffff80000000
+      v11: 0xffffffffffffffffffffffff80000000
+      v12: 0xffffffffffffffff00000000000000ff
+      v13: 0xffffffff80000000ffffffffffffff80
+      v14: 0x7fffffffffffffffff
+      v15: 0xffffffff8000000000000000000000ff
+      v16: 0xffffffffffffff800000000000000539
+      v17: 0xffffffffffff80000000000000000000
+      v18: 0x8000000000000000ffffffffffffff80
+      v19: 0x2a0000000000000001
+      v20: 0x7fffffffffffffffffffffffffffff80
+      v21: 0xffffffffffffff80ffffffffffff8000
+      v22: 0x2a
+      v23: 0x100000000ffffffff
+      v24: 0xffff0000000000000001
+      v25: 0xffffffffffffffff00000000000000ff
+      v26: 0x53900000000000000ff
+      v27: 0xffffffffffffff80ffffffffffffffff
+      v28: 0x2a7fffffffffffffff
+      v29: 0xffffffffffffffffffffffffffffff80
+      v30: 0xffff00000000000000ff
+      v31: 0xff00000000000000ff
+generator:
+  type: SimpleDiffFuzzGenerator
+  instruction_collection:
+    extensions:
+    - TODO
+    removed_instructions:
+    - A64.control.exception.SVC_EX_exception
+    - A64.control.hints.PACIA1716_HI_hints
+    - A64.dpreg.dp_1src.PACDA_64P_dp_1src
+    - A64.control.hints.XPACLRI_HI_hints
+    - A64.control.hints.HINT_HM_hints
+    - A64.dpreg.dp_1src.PACIA_64P_dp_1src
+    - A64.control.branch_reg.RETAA_64E_branch_reg
+    - A64.dpreg.dp_1src.PACIB_64P_dp_1src
+    - A64.ldst.ldst_pac.LDRAA_64_ldst_pac
+    - A64.dpreg.dp_1src.AUTIB_64P_dp_1src
+    - A64.dpreg.dp_2src.PACGA_64P_dp_2src
+    - A64.control.hints.AUTIA1716_HI_hints
+    - A64.dpreg.dp_1src.AUTDB_64P_dp_1src
+    - A64.dpreg.dp_1src.PACDB_64P_dp_1src
+    - A64.control.hints.AUTIB1716_HI_hints
+    - A64.dpreg.dp_1src.AUTIA_64P_dp_1src
+    - A64.control.hints.PACIB1716_HI_hints
+    - A64.dpreg.dp_1src.AUTDA_64P_dp_1src
+    commit: 567f121aee15a15bb7723d91b9ec4a11971df3aa
+    type: ArmInstructionCollection
+  seq_len: 0x5
+  num_regs: 0x5
+  seed: 0x0
+  weighted: false
+counter: 0x1a2efa
+arch: aarch64
+flags:
+- -DCHECK_MEM
+- -DAUTO_MAP_MEM
+- -DVECTOR
+- -DVERBOSE

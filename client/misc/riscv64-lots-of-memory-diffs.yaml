@@ -1,0 +1,122 @@
+input:
+  instr_seq:
+  - 0x49859533
+  - 0xfe9a7d7
+  - 0xaad403a7
+  - 0x87edaa57
+  - 0x6010959b
+  dis: []
+  dis_mra:
+  - bclr
+  - vredxor.vs
+  - vsse8.v
+  - vdiv.vv
+  - ctzw
+  regs:
+    gp:
+      ra: 0x7fffffff
+      sp: 0xffffffffffffffff
+      gp: 0xffffffff
+      tp: 0xffffffff80000000
+      t0: 0xffffffffffffffff
+      t1: 0xff
+      t2: 0x7fff
+      s0: 0x7fffffff
+      s1: 0xffff
+      a0: 0xffffffffffffff80
+      a1: 0xffffffffffffff80
+      a2: 0xffffffffffffffff
+      a3: 0xffffffffffff8000
+      a4: 0x8000000000000000
+      a5: 0x7f
+      a6: 0x2a
+      a7: 0x2
+      s2: 0xff
+      s3: 0xffffffffffffffff
+      s4: 0x7f
+      s5: 0x2
+      s6: 0x7fffffff
+      s7: 0x8000000000000000
+      s8: 0xffff
+      s9: 0x7fffffff
+      s10: 0xffff
+      s11: 0xffffffffffffffff
+      t3: 0xff
+      t4: 0xffffffff
+      t5: 0xffff
+      t6: 0xffff
+    fp:
+      ft0: 0x80000001
+      ft1: 0x7fc00000
+      ft2: 0x3f800000
+      ft3: 0x8000000000000
+      ft4: 0x4045000000000000
+      ft5: 0xfff0000000000000
+      ft6: 0x800000
+      ft7: 0x80000000
+      fs0: 0x8008000000000000
+      fs1: 0xfff0000000000000
+      fa0: 0x8000000000000000
+      fa1: 0x80000001
+      fa2: 0x8000000000000000
+      fa3: 0x7fefffffffffffff
+      fa4: 0xfff8000000000000
+      fa5: 0x44a72000
+      fa6: 0x800000
+      fa7: 0x8000000000000
+      fs2: 0x8008000000000000
+      fs3: 0x800000
+      fs4: 0x7fefffffffffffff
+      fs5: 0x800000
+      fs6: 0xff7fffff
+      fs7: 0x3ff0000000000000
+      fs8: 0x0
+      fs9: 0xff800000
+      fs10: 0x7ff8000000000000
+      fs11: 0x7f7fffff
+      ft8: 0x80800000
+      ft9: 0xff800000
+      ft10: 0x7f800000
+      ft11: 0x1
+    vec:
+      v0: 0x1000000007fffffff
+      v1: 0xff0000000000000000
+      v2: 0xff00000000ffffffff
+      v3: 0x200000000ffffffff
+      v4: 0xff8000000000000000
+      v5: 0xffffffffffff8000ffffffffffffffff
+      v6: 0x2a0000000000000000
+      v7: 0xffffffffffffff800000000000007fff
+      v8: 0xffffffffffffffff000000000000ffff
+      v9: 0xffffffffffffffff000000000000002a
+      v10: 0xffffffffffffffff0000000000000001
+      v11: 0x7fffffffffffffff0000000000007fff
+      v12: 0x7fff0000000000000000
+      v13: 0xffffffffffffffff000000000000002a
+      v14: 0x7fffffffffffffffffffff80
+      v15: 0xffffffffffffff800000000000000001
+      v16: 0x80000000000000000000000000000539
+      v17: 0xffffffffffff80007fffffffffffffff
+      v18: 0x2a000000000000ffff
+      v19: 0x7f0000000000000001
+      v20: 0x7fffffffffffffff8000
+      v21: 0x2a00000000000000ff
+      v22: 0xffffffff00000000ffffffff
+      v23: 0xffffffffffff8000000000000000ffff
+      v24: 0x7fffffffffffffff000000007fffffff
+      v25: 0xffffffff000000000000ffff
+      v26: 0xffffffffffff8000ffffffffffffff80
+      v27: 0x2000000000000ffff
+      v28: 0xffffffff000000007fffffff
+      v29: 0xffff7fffffffffffffff
+      v30: 0xffff
+      v31: 0x1
+flags:
+- -DAUTO_MAP_MEM
+- -DCHECK_MEM
+- -DMETA
+- -DVECTOR
+- -DFLOATS
+- -DAUTO_MAP_MEM_RW_PROT
+arch: riscv64
+seed: 0x0
