@@ -75,71 +75,74 @@
     // if the physical vector reg size is not equal on machines (see comment in runner.c)
     li t0, VEC_REG_SIZE
     vsetvli x0, t0, e8, m1
+    li t0, VEC_REG_SIZE
     vse8.v  v0, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v1, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v2, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v3, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v4, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v5, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v6, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v7, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v8, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v9, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v10, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v11, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v12, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v13, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v14, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v15, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v16, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v17, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v18, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v19, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v20, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v21, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v22, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v23, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v24, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v25, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v26, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v27, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v28, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v29, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v30, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vse8.v  v31, 0(x29)
-    addi    x29,   x29, 16
-    addi x29, x29, -512
+    addi    x29,   x29, t0
+    // Substract vector size*32
+    slli t0, t0, 5
+    sub  x29, x29, t0
     addi x29, x29, -512
 .endm
 
@@ -258,71 +261,74 @@ save_state_vector_\regs\()_\()__COUNTER__:
     // if the physical vector reg size is not equal on machines (see comment in runner.c)
     li t0, VEC_REG_SIZE
     vsetvli x0, t0, e8, m1
+    li t0, VEC_REG_SIZE
     vle8.v  v0, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v1, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v2, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v3, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v4, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v5, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v6, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v7, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v8, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v9, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v10, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v11, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v12, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v13, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v14, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v15, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v16, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v17, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v18, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v19, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v20, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v21, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v22, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v23, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v24, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v25, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v26, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v27, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v28, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v29, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v30, 0(x29)
-    addi    x29,   x29, 16
+    addi    x29,   x29, t0
     vle8.v  v31, 0(x29)
-    addi    x29,   x29, 16
-    addi x29, x29, -512
+    addi    x29,   x29, t0
+    // Substract vector size*32
+    slli t0, t0, 5
+    sub  x29, x29, t0
     addi x29, x29, -512
 .endm
 
