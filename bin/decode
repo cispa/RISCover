@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import argparse
 
+# NOTE: to decode rv_v_0.7.1 use --instruction-db instructions_rv_v_0.7.1.json
+
 from pyutils.shared_logic import parse_and_set_flags
 parse_and_set_flags()
 
@@ -33,8 +35,12 @@ for i in args.instr:
     if not first:
         print()
     first = False
-    print(format(i, '08x'))
     mnemonic = collection.disassemble(i)
+    print()
+    print(f"{i:08x}")
+    if mnemonic not in collection.instructions:
+        print(f"Instruction {i:08x} unknown (can't decode with MRA)")
+    print(f"Extension: {collection.instructions[mnemonic]['extension']}")
     instr = Instruction(mnemonic=mnemonic, mra_instruction=collection.instructions[mnemonic], value=i)
     instr.pretty_print_instr()
 

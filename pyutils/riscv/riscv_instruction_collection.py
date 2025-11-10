@@ -19,39 +19,32 @@ immediates = {
 class RiscvInstructionCollection(InstructionCollection):
     # Canonical list of globs that define all RISC-V extensions used to build the DB
     ALL_EXTENSION_GLOBS = ["rv*", "unratified/rv*", "custom/rv_thead"]
+
     @staticmethod
-    def _load_db():
-        db = os.path.join(os.path.dirname(__file__), 'instructions.json')
+    def _load_db(db):
         try:
-            with open(db, 'r') as f:
+            path = os.path.join(os.path.dirname(__file__), db)
+            with open(path, 'r') as f:
                 return json.loads(f.read())
         except FileNotFoundError:
-            print("Error: 'instructions.json' file not found. Generate it with riscv_opcodes_to_instruction_collection.py")
+            print(f"Error: {path} file not found. Generate it with riscv_opcodes_to_instruction_collection.py")
             exit(1)
         except JSONDecodeError:
-            print(f"Error: {db} is no valid json. Regenerate it with riscv_opcodes_to_instruction_collection.py")
+            print(f"Error: {path} is no valid json. Regenerate it with riscv_opcodes_to_instruction_collection.py")
             exit(1)
 
     # relative to FRAMEWORK_ROOT
-    def __init__(self, extensions, weights_file="pyutils/riscv/weighted_opcodes.json", remove_instructions=[]):
+    def __init__(self, extensions, weights_file="pyutils/riscv/weighted_opcodes.json", remove_instructions=[], db='instructions.json'):
         self.weights_file = weights_file
         self.removed_instructions = set()
 
         self.extensions = extensions
+        self.db = db
 
         # We expect fully expanded extension names here (no globs)
         assert(all('*' not in x for x in extensions))
 
-        try:
-            db = os.path.join(os.path.dirname(__file__), 'instructions.json')
-            with open(db, "r") as f:
-                all_instructions = json.loads(f.read())
-        except JSONDecodeError:
-            print(f"Error: {db} is no valid json. You most likely did not pull git LFS files correctly yet or it is corrupted. Generate it with riscv_opcodes_to_instruction_collection.py")
-            exit(1)
-        except FileNotFoundError:
-            print("Error: 'instructions.json' file not found. Generate it with riscv_opcodes_to_instruction_collection.py")
-            exit(1)
+        all_instructions = RiscvInstructionCollection._load_db(self.db)
 
         # Filter by provided extensions (intersection)
         self.instructions = {
@@ -67,8 +60,7 @@ class RiscvInstructionCollection(InstructionCollection):
                 self.removed_instructions.add(i)
 
         if len(self.instructions) == 0:
-            cmd = "riscv_opcodes_to_instruction_collection.py"
-            raise Exception(f"No instructions generated from the specified extensions. Make sure they exist or match the glob you specified.\nYou used {', '.join(self.extensions)}\nThe command is {cmd}")
+            raise Exception(f"No instructions left from the specified extensions. Make sure they exist or match the glob you specified.\nYou used extensions: {', '.join(self.extensions)}\n")
 
         with open(os.path.join(FRAMEWORK_ROOT, self.weights_file), "r") as f:
             self.weights = json.load(f)
@@ -161,12 +153,12 @@ class RiscvInstructionCollection(InstructionCollection):
         return self.extract_value(instr, *next(filter(lambda f: f["name"] == field, self.instructions[d_instr]["fields"]))["range"])
 
     @staticmethod
-    def get_extensions_matching_globs(globs):
-        return RiscvInstructionCollection.expand_globs(globs)
+    def get_extensions_matching_globs(globs, db):
+        return RiscvInstructionCollection.expand_globs(globs, db)
 
     @staticmethod
-    def list_extensions():
-        instructions = RiscvInstructionCollection._load_db()
+    def list_extensions(db):
+        instructions = RiscvInstructionCollection._load_db(db)
         all_exts = set()
         for _, details in instructions.items():
             for ext in details.get('extension', []):
@@ -174,8 +166,8 @@ class RiscvInstructionCollection(InstructionCollection):
         return sorted(all_exts)
 
     @staticmethod
-    def expand_globs(globs):
-        all_exts = RiscvInstructionCollection.list_extensions()
+    def expand_globs(globs, db):
+        all_exts = RiscvInstructionCollection.list_extensions(db)
         expanded = []
         for pattern in globs:
             expanded += [e for e in all_exts if fnmatch.fnmatch(e, pattern)]

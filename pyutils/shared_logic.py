@@ -75,6 +75,7 @@ def parser_add_common_extension_parsing(parser):
     parser.add_argument('--add-extensions', nargs='+', default=[], help="Add these extensions to the predefined list of extensions.")
     parser.add_argument('--remove-extensions', nargs='+', default=remove_extensions, help="Which extensions should be excluded after expanding included extensions. By default excludes e.g. the vector extension on riscv64 when --vector is not used.")
     parser.add_argument('--add-remove-extensions', nargs='+', default=[], help="Add these extensions to the remove list.")
+    parser.add_argument('--instruction-db', default='instructions.json', help="Use this filename as instruction database. Useful for switching to instructions_rv_v_0.7.1.json.")
 
 def get_common_argparser():
     parser = get_most_common_argparser()
@@ -117,8 +118,8 @@ def get_collection_from_args(args):
     match config.ARCH:
         case "riscv64":
             from pyutils.riscv.riscv_instruction_collection import RiscvInstructionCollection
-            extensions = RiscvInstructionCollection.get_extensions_matching_globs(extensions)
-            rm_extensions = RiscvInstructionCollection.get_extensions_matching_globs(remove_extensions)
+            extensions = RiscvInstructionCollection.get_extensions_matching_globs(extensions, db=args.instruction_db)
+            rm_extensions = RiscvInstructionCollection.get_extensions_matching_globs(remove_extensions, db=args.instruction_db)
         case "aarch64":
             from pyutils.arm.arm_instruction_collection import ArmInstructionCollection
             extensions = extensions
@@ -130,9 +131,9 @@ def get_collection_from_args(args):
     print("Expanded:", extensions, file=sys.stderr)
     match config.ARCH:
         case "riscv64":
-            return RiscvInstructionCollection(extensions=extensions)
+            return RiscvInstructionCollection(extensions=extensions, db=args.instruction_db)
         case "aarch64":
-            return ArmInstructionCollection(extensions=extensions)
+            return ArmInstructionCollection(extensions=extensions, db=args.instruction_db)
 
 def parse_args(parser):
     args = parser.parse_args()

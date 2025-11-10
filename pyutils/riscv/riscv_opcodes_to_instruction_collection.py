@@ -41,11 +41,21 @@ def split_encoding_str(encoding: str):
 
 def main():
     base_dir = os.path.dirname(__file__)
-    opcodes_dir = os.path.join(base_dir, 'riscv_opcodes')
+    opcodes_dir = os.path.join(base_dir, 'riscv-opcodes')
 
     # Ensure we include all extensions in the DB
     from pyutils.riscv.riscv_instruction_collection import RiscvInstructionCollection
     extensions = get_extensions_matching_globs(opcodes_dir, RiscvInstructionCollection.ALL_EXTENSION_GLOBS)
+
+    target = "instructions.json"
+
+
+    # Uncomment to generate vector 0.7.1 db
+    # extensions = extensions+get_extensions_matching_globs(opcodes_dir, ["custom/rv_v_0.7.1"])
+    # extensions.remove("rv_v")
+    # extensions.remove("unratified/rv_zabha")
+    # target = "instructions_rv_v_0.7.1.json"
+
 
     cmd = f"make -C {opcodes_dir} clean everything EXTENSIONS='{' '.join(extensions)}'"
     if os.system(f"{cmd} >/dev/null 2>&1") != 0:
@@ -115,9 +125,9 @@ def main():
         combined_mask = InstructionCollection.gen_combined_mask(instructions[mnemonic])
         instructions[mnemonic]["combined_mask"] = combined_mask
 
-    with open(os.path.join(base_dir, "instructions.json"), "w") as f:
+    with open(os.path.join(base_dir, target), "w") as f:
         f.write(json.dumps(instructions))
-        print("Wrote to instructions.json")
+        print("Wrote to "+target)
 
 
 if __name__ == '__main__':

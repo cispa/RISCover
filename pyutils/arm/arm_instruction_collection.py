@@ -38,19 +38,20 @@ immediates = dict([
 ])
 
 class ArmInstructionCollection(InstructionCollection):
-    def __init__(self, extensions):
+    def __init__(self, extensions, db='instructions.json'):
         self.extensions = extensions
         self.removed_instructions = set()
 
+        self.db = os.path.join(os.path.dirname(__file__), db)
+
         try:
-            db = os.path.join(os.path.dirname(__file__), 'instructions.json')
-            with open(db, "r") as f:
+            with open(self.db, "r") as f:
                 self.instructions = json.loads(f.read())
         except JSONDecodeError:
-            print(f"Error: {db} is no valid json. You most likely did not pull git LFS files correctly yet. Try")
+            print(f"Error: {self.db} is no valid json. You most likely did not pull git LFS files correctly yet. Try")
             exit(1)
         except FileNotFoundError:
-            print("Error: 'instructions.json' file not found. Generate it with mra_tools_to_instruction_collection.py")
+            print(f"Error: {db} file not found. Generate it with mra_tools_to_instruction_collection.py")
             exit(1)
 
         self.instructions = {
