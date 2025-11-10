@@ -1,7 +1,26 @@
 #!/usr/bin/env python3
 from tabulate import tabulate
 
-from pyutils.util import bcolors, gp, fp, is_floating_point_instr, is_memory_read, is_memory_write
+from pyutils import config
+from pyutils.util import (
+    bcolors,
+    fp,
+    gp,
+    is_floating_point_instr,
+    is_memory_read,
+    is_memory_write,
+    vec,
+)
+
+RISCV_GPR_FIELDS = {"rd", "rd1", "rd2", "rs1", "rs2", "rs3"}
+RISCV_FP_FIELDS = {"fd", "fs1", "fs2", "fs3"}
+RISCV_VECTOR_FIELDS = {"vd", "vs1", "vs2", "vs3"}
+
+AARCH64_GENERAL_REG_FIELDS = {"Ra", "Rd", "Rdn", "Rm", "Rn", "Rs", "Rt", "Rt2", "Xd", "Xm", "Xn", "Xt", "Xt2"}
+AARCH64_VECTOR_REG_FIELDS = {"Vd", "Vdn", "Vm", "Vn"}
+AARCH64_Z_REG_FIELDS = {"Zd", "Zda", "Zdn", "Zk", "Zm", "Zn", "Zt"}
+AARCH64_ZA_REG_FIELDS = {"Za"}
+AARCH64_PRED_REG_FIELDS = {"Pd", "Pdm", "Pdn", "Pg", "Pm", "Pn", "Pt", "Pv", "PNd", "PNg", "PNn"}
 
 class Instruction():
     def __init__(self, mnemonic, mra_instruction, value):
@@ -53,17 +72,65 @@ class Instruction():
             bits = range_end - range_start + 1
             val = self.extract_value(range_end, range_start)
             name = field["name"]
-            # TODO(aarch64)
-            # TODO(riscv64): add others
-            # TODO: should we split this between architectures, its bad when something overlaps
-            verbose = None
-            if name in ["rd", "rs1", "rs2"]:
-                if is_floating_point_instr(self.mnemonic) and not (is_memory_read(self.mnemonic) or is_memory_write(self.mnemonic)):
-                    verbose = fp[val]
-                else:
-                    verbose = (["x0"]+gp)[val]
+            verbose = self._format_verbose_value(name, val, bits)
             fields += [(range_start, (name, val, verbose, bits))]
         return list(map(lambda x: x[1], sorted(fields)))
+
+    def _format_verbose_value(self, field_name, value, bits):
+        if not field_name:
+            return None
+        if config.ARCH == "riscv64":
+            return self._format_riscv_verbose(field_name, value, bits)
+        if config.ARCH == "aarch64":
+            return self._format_aarch64_verbose(field_name, value, bits)
+        return None
+
+    def _format_riscv_verbose(self, field_name, value, bits):
+        normalized = self._normalize_field_name(field_name)
+        if bits == 5 and normalized in RISCV_VECTOR_FIELDS:
+            return self._safe_index(vec, value)
+        if bits == 5 and normalized in RISCV_FP_FIELDS:
+            return self._safe_index(fp, value)
+        if bits == 5 and normalized in RISCV_GPR_FIELDS:
+            if normalized in {"rd", "rs1", "rs2", "rs3"} and self._should_use_fp_registers():
+                return self._safe_index(fp, value)
+            return self._safe_index(self._general_register_names(), value)
+        return None
+
+    def _format_aarch64_verbose(self, field_name, value, bits):
+        if bits == 5 and field_name in AARCH64_GENERAL_REG_FIELDS:
+            return self._safe_index(self._general_register_names(), value)
+        if bits == 5 and field_name in AARCH64_VECTOR_REG_FIELDS:
+            return self._safe_index(vec, value)
+        if bits == 5 and field_name in AARCH64_Z_REG_FIELDS:
+            return f"z{value}"
+        if bits == 5 and field_name in AARCH64_ZA_REG_FIELDS:
+            return f"za{value}"
+        if bits in (3, 4) and field_name in AARCH64_PRED_REG_FIELDS:
+            return f"p{value}"
+        return None
+
+    def _normalize_field_name(self, name):
+        if config.ARCH != "riscv64":
+            return name
+        normalized = name
+        if normalized.startswith("c."):
+            normalized = normalized[2:]
+        return normalized.split(".")[0]
+
+    def _general_register_names(self):
+        if config.ARCH == "riscv64":
+            return ["x0", *gp]
+        return list(gp)
+
+    def _should_use_fp_registers(self):
+        return is_floating_point_instr(self.mnemonic) and not (is_memory_read(self.mnemonic) or is_memory_write(self.mnemonic))
+
+    @staticmethod
+    def _safe_index(names, idx):
+        if idx < 0 or idx >= len(names):
+            return None
+        return names[idx]
 
     def extract_value(self, msb, lsb):
         bits = msb-lsb+1

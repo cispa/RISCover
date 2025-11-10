@@ -43,5 +43,3 @@ for i in args.instr:
     print(f"Extension: {collection.instructions[mnemonic]['extension']}")
     instr = Instruction(mnemonic=mnemonic, mra_instruction=collection.instructions[mnemonic], value=i)
     instr.pretty_print_instr()
-
-# TODO: pretty print show regs for rs1, rs2, rd
