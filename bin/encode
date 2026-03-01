@@ -5,6 +5,7 @@ from pyutils.shared_logic import parse_and_set_flags
 parse_and_set_flags()
 
 from pyutils.shared_logic import parser_add_common_extension_parsing, get_collection_from_args, get_most_common_argparser
+from pyutils.generation.instruction import Instruction
 
 parser = get_most_common_argparser()
 parser.add_argument('instr', type=str)
@@ -22,4 +23,6 @@ for c in args.change:
     name, value = c.split('=')
     i = collection.instr_set_encoding(i, name, int(value, 0), mnemonic=args.instr)
 print("New instruction:", hex(i))
-collection.pretty_print_instr(i)
+assert(args.instr in collection.instructions)
+instr = Instruction(mnemonic=args.instr, mra_instruction=collection.instructions[args.instr], value=i)
+instr.pretty_print_instr()
