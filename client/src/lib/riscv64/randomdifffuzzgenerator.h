@@ -157,7 +157,9 @@ void fill_regs_with_fuzzing_value_map(shared_rng* rng, struct regs* regs) {
 /*     regs->fpsr = 0; */
 /* #endif */
 
-#if defined(FLOATS) && !defined(VECTOR)
+    // Unlike aarch64, the FP and vector register files are separate on riscv64,
+    // so FP regs need to be filled even when VECTOR is enabled.
+#ifdef FLOATS
     LOOP_OVER_FP(regs,
         (void)abi_i;
         val->u = fuzzing_value_map_fp_val_or_rand(rng);
